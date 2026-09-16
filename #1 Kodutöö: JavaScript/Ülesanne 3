@@ -1,0 +1,81 @@
+// Algne massiiv
+const users = [
+  { id: 1, name: "Mari", age: 22, active: true },
+  { id: 2, name: "Jüri", age: 17, active: false },
+  { id: 3, name: "Kati", age: 31, active: true },
+  { id: 4, name: "Martin", age: 19, active: false },
+  { id: 5, name: "Laura", age: 26, active: true }
+];
+
+//3.1. Kõikide kasutajate nimede kuvamine
+users.forEach(user => console.log(user.name));  //.forEach() meetod käib kordamööda läbi iga users massiivis oleva objekti ja väljastab konsooli ainult omaduse user.name.
+
+//3.2. Aktiivsete kasutajate leidmine (.filter())
+const activeUsers = users.filter(user => user.active);
+console.log(activeUsers);
+//.filter() otsib läbi kogu massiivi ja tagastab uue massiivi ainult nendest elementidest, mille puhul avaldis user.active on true.
+
+//3.3. Vähemalt 18-aastaste kasutajate leidmine (.filter())
+const adults = users.filter(user => user.age >= 18);
+console.log(adults);
+//.filter() kontrollib iga kasutaja vanust tingimusega user.age >= 18 ning loob uue massiivi vaid täisealiste kasutajatega.
+
+//3.4. Kasutajate nimede massiivi loomine (.map())
+const userNames = users.map(user => user.name);
+console.log(userNames); // ["Mari", "Jüri", "Kati", "Martin", "Laura"]
+//.map() võtab algsest massiivist iga objekti, eraldab sealt omaduse name ja tagastab uue massiivi, mis sisaldab ainult kasutajate nimesid teksti kujul.
+
+//3.5. Kasutaja leidmine ID järgi (.find())
+const userWithId3 = users.find(user => user.id === 3);
+console.log(userWithId3);
+//.find() käib massiivi läbi ja tagastab esimese objekti, mille puhul user.id === 3 on tõene. Erinevalt .filter() meetodist ei tagasta see massiivi, vaid ühe specifiilise objekti.
+
+//3.6. Tavaline funktsioon getUserStatus(user)
+function getUserStatus(user) {
+  if (user.active) {
+    return "Aktiivne";
+  } else {
+    return "Mitteaktiivne";
+  }
+}
+//Tavalises funktsioonis kontrollitakse if...else lausega antud kasutaja active omadust. Kui see on true, tagastatakse sõne "Aktiivne", vastasel juhul "Mitteaktiivne".
+
+//3.7. Noolfunktsioon getGreeting(user)
+const getGreeting = (user) => `Tere, ${user.name}! Sa oled ${user.age} aastat vana.`;
+console.log(getGreeting(users[0])); // "Tere, Mari! Sa oled 22 aastat vana."
+//Noolfunktsioon (=>) kasutab mallisõnet (template literal backtick-märkide ` vahel), et kleepida muutujad ${user.name} ja ${user.age} otse teksti sisse.
+
+//3.8. Objektist andmete väljavõtmine (destructuring)
+const { name, age } = users[0];
+console.log(name, age); // Mari 22
+//Destructuring võimaldab pakkida objekti sees olevad omadused lahti otse samanimelistesse muutujatesse name ja age ilma users[0].name ja users[0].age välja kirjutamata.
+
+//3.9. Uue kasutaja lisamine spread-süntaksiga
+const newUser = { id: 6, name: "Karl", age: 24, active: true };
+const updatedUsers = [...users, newUser];
+
+console.log(updatedUsers); // Sisaldab 6 kasutajat
+console.log(users);        // Esialgne massiiv jäi muutumatuks (5 kasutajat)
+//Spread-operaator (...users) kopeerib algse massiivi elemendid uude massiivi ning koma järel lisatakse selle lõppu newUser. See tagab, et algne users massiiv ei muutu.
+
+//3.10. Optional chaining (?.) ja Nullish coalescing (??)
+// Teeme näitliku kasutaja koos aadressiga ja ilma aadressita kasutaja
+const userWithAddress = { ...users[0], address: { city: "Tallinn" } };
+const userWithoutAddress = users[1];
+
+console.log(userWithAddress.address?.city ?? "Linn puudub"); // Väljund: "Tallinn"
+console.log(userWithoutAddress.address?.city ?? "Linn puudub"); // Väljund: "Linn puudub"
+
+//user.address?.city kontrollib turvaliselt, kas address on olemas. Kui address on undefined, ei viska kood veateadet, vaid tagastab undefined.
+//?? "Linn puudub" kontrollib, kas vasakpoolne väärtus on null või undefined. Kui on, kuvatakse parempoolne vaikimisi tekst "Linn puudub".
+
+//3.11. Kasutajate läbikandmine ja staatuse kuvamine (.forEach())
+users.forEach(user => {
+  console.log(`${user.name} – ${getUserStatus(user)}`);
+});
+//.forEach() käib läbi iga kasutaja ning kuva mallisõne abil kasutaja nime ja eelnevalt punktis 3.6 loodud getUserStatus() funktsiooni tagastatud staatuse.
+
+//3.12. Kasutajate sorteerimine vanuse järgi noorimast vanimani
+const sortedUsers = [...users].sort((a, b) => a.age - b.age);
+console.log(sortedUsers);
+//Kuna .sort() muudab algset massiivi, tehakse enne spread-süntaksiga [...users] massiivist koopia. Sorteerimise võrdlusfunktsioon a.age - b.age tagastab negatiivse arvu, kui a on noorem kui b, paigutades nooremad kasutajad ettepoole.
