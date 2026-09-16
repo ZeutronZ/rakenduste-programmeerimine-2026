@@ -1,101 +1,394 @@
 1. Variables: const, let, and var
-Declaring, assigning, and reassigning variables.
-When to use const and when to use let.
-Why older code uses var.
-Block scope: how { } affects where variables are available.
+
+const name = "Alice";
+
+let age = 30;
+
+var greeting = "Hello there!";
+
+// Block Scope:
+if (true) {
+  const blockScopedConst = "I stay in here";
+  let blockScopedLet = "Me too";
+  var functionScopedVar = "I leak out!";
+}
+
 2. Data Types, null, and undefined
-Strings, numbers, booleans, objects, and arrays.
-Checking types with typeof.
-The difference between null and undefined.
-The difference between "5" and 5.
-Two quirks: typeof null and typeof [] both return "object".
-Checking whether a value is an array with Array.isArray().
+
+// Data Types
+const stringType = "Hello";
+const numberType = 42;
+const booleanType = true;
+const objectType = { key: "value" };
+const arrayType = [1, 2, 3];
+
+// Checking types
+console.log(typeof stringType); // "string"
+console.log(typeof numberType); // "number"
+
+// "5" vs 5
+console.log(typeof "5"); // "string"
+console.log(typeof 5);   // "number"
+
+// undefined: A variable is declared but has no assigned value.
+let notAssigned;
+console.log(notAssigned); // undefined
+
+// null: Explicitly empty or non-existent value assigned by the developer.
+let emptyValue = null;
+
+// The Quirks
+console.log(typeof null);
+console.log(typeof []);
+
+// How to actually check for an array
+console.log(Array.isArray(arrayType)); // true
+
 3. Operators and Type Conversion
-Arithmetic operators: +, -, *, /, %, and **.
-Updating values with += and ++.
-Converting values with Number() and String().
-Comparing "5" + 2 with Number("5") + 2.
-What NaN means.
+
+// Arithmetic Operators
+const sum = 10 + 5;      // 15
+const diff = 10 - 5;     // 5
+const product = 10 * 5;  // 50
+const quotient = 10 / 5; // 2
+const remainder = 10 % 3; // 1 (10 divided by 3 leaves 1)
+const power = 2 ** 3;    // 8 (2 to the power of 3)
+
+// Updating values
+let score = 10;
+score += 5; // 15 (same as score = score + 5)
+score++;    // 16 (increments by 1)
+
+// "5" + 2 vs Number("5") + 2
+console.log("5" + 2);         // "52" (String concatenation)
+console.log(Number("5") + 2); // 7 (Math addition)
+
+// Type Conversion
+const numStr = String(100);   // "100"
+
+// NaN (Not-a-Number)
+// Happens when a math operation fails to produce a valid number.
+const badMath = Number("apples") * 5;
+console.log(badMath); // NaN
+
 4. Strings and Template Literals — Solo Topic
-Creating strings with single quotes, double quotes, and backticks.
-Using .length, .trim(), .toLowerCase(), and .includes().
-Inserting values into strings with ${variable}.
-Example: cleaning up a name and building a greeting.
+
+// Creating strings
+const singleQuotes = 'Hello';
+const doubleQuotes = "World";
+
+// String Methods
+const rawName = "   aLiCe  ";
+console.log(rawName.length);       // 10
+const trimmed = rawName.trim();    // "aLiCe"
+const cleanName = trimmed.toLowerCase(); // "alice"
+
+console.log(cleanName.includes("li")); // true
+
+// Template Literals (Backticks)
+// Allows multi-line strings and easy variable interpolation (${})
+const capitalizedName = cleanName[0].toUpperCase() + cleanName.slice(1);
+const greeting = `Welcome back, ${capitalizedName}! You have ${5 + 2} new messages.`;
+
+console.log(greeting);
+
 5. Comparisons, Logical Operators, and Decisions
-Comparison operators: ===, !==, >, <, >=, and <=.
-Why prefer === over ==.
-Logical operators: &&, ||, and !.
-Truthy and falsy values, including "", 0, null, and undefined.
-Using if, else if, and else.
-Using condition ? valueA : valueB for a simple choice.
-Example: checking a user's age and login status to choose a message.
+
+// Comparisons
+console.log(10 > 5);  // true
+console.log(10 <= 5); // false
+
+// === (strict equality) vs == (loose equality)
+// ALWAYS prefer === because it checks both value AND type.
+console.log(5 == "5");  // true (type coercion applied)
+console.log(5 === "5"); // false (different types)
+console.log(5 !== "5"); // true (strictly not equal)
+
+// Logical Operators
+const isLoggedIn = true;
+const isAdmin = false;
+
+console.log(isLoggedIn && isAdmin); // false (AND: both must be true)
+console.log(isLoggedIn || isAdmin); // true (OR: at least one must be true)
+console.log(!isLoggedIn);           // false (NOT: flips the boolean)
+
+// Truthy and Falsy values
+// Falsy: false, 0, "", null, undefined, NaN
+// Truthy: Everything else (e.g., "hello", 1, [], {})
+if ("") {
+  console.log("This won't run because empty strings are falsy.");
+}
+
+// Decisions: if, else if, else
+const userAge = 20;
+
+if (userAge < 13) {
+  console.log("Child account");
+} else if (userAge >= 13 && userAge < 18) {
+  console.log("Teen account");
+} else {
+  console.log("Adult account");
+}
+
+// Ternary Operator: condition ? true_value : false_value
+const statusMessage = isLoggedIn ? "Welcome!" : "Please log in.";
+console.log(statusMessage); // "Welcome!"
+
 6. Numbers and the Math Object
-Using Math.round(), Math.floor(), and Math.ceil().
-Finding values with Math.min() and Math.max().
-Understanding the range of Math.random().
-Example: generating a random whole number from 1 to 6.
+
+// Rounding
+console.log(Math.round(4.5)); // 5 (Rounds to nearest)
+console.log(Math.floor(4.9)); // 4 (Rounds down)
+console.log(Math.ceil(4.1));  // 5 (Rounds up)
+
+// Min and Max
+console.log(Math.min(10, 5, 20)); // 5
+console.log(Math.max(10, 5, 20)); // 20
+
+// Math.random() returns a decimal between 0 (inclusive) and 1 (exclusive)
+const rand = Math.random(); 
+
+// Example: Random whole number from 1 to 6 (like rolling a die)
+const min = 1;
+const max = 6;
+// Math.random() * 6 gives a range of 0 to 5.999...
+// Math.floor() rounds it down to 0, 1, 2, 3, 4, or 5.
+// Adding min (1) shifts the range to 1, 2, 3, 4, 5, or 6.
+const dieRoll = Math.floor(Math.random() * (max - min + 1)) + min;
+console.log(`You rolled a ${dieRoll}!`);
+
 7. Arrays and Loops
-Creating arrays and accessing items by index.
-Zero-based indexing and .length.
-Using .includes(), .push(), and .pop().
-Which operations change the original array?
-Iterating over an array with for and for...of.
-Understanding a for loop's counter, condition, and update.
-Using break and avoiding infinite loops.
-Example: creating a list of names, updating it, and printing each name.
+
+// Creating and accessing (0-based indexing)
+const names = ["Alice", "Bob", "Charlie"];
+console.log(names[0]); // "Alice"
+console.log(names.length); // 3
+
+// Methods that don't change the original array
+console.log(names.includes("Bob")); // true
+
+// Methods that DO change (mutate) the original array
+names.push("Dave"); // Adds to the end
+const removed = names.pop(); // Removes and returns the last item ("Dave")
+
+// 1. Traditional 'for' loop
+// Structure: (counter setup; run condition; update counter)
+for (let i = 0; i < names.length; i++) {
+  console.log(`Hello, ${names[i]}`);
+}
+
+// 2. 'for...of' loop (simpler, usually preferred for arrays)
+for (const name of names) {
+  if (name === "Bob") {
+    console.log("Found Bob, stopping loop!");
+    break; // Exits the loop entirely immediately
+  }
+  console.log(`Checking ${name}...`);
+}
+
+// Avoiding infinite loops: 
+// Ensure your condition (e.g., i < 10) will eventually evaluate to false,
+// usually by incrementing a counter (i++).
+
 8. Objects and Handling Missing Data
-Creating an object with properties and values.
-Reading properties with dot and bracket notation.
-Adding and updating properties.
-Accessing nested objects.
-What happens when a property does not exist?
-Reading nested properties safely with optional chaining: ?..
-Providing default values with nullish coalescing: ??.
-Comparing value ?? fallback with value || fallback, including when the value is 0, false, or "".
-Example: displaying a user profile with missing information.
+
+// Creating an object
+const user = {
+  id: 101,
+  name: "Eve",
+  address: {
+    city: "New York"
+  }
+};
+
+// Reading properties
+console.log(user.name); 
+console.log(user["id"]); 
+
+// Adding/Updating
+user.email = "eve@example.com";
+user.name = "Eve Smith";
+
+// Accessing missing properties returns 'undefined'
+console.log(user.phone); // undefined
+
+// Optional Chaining (?.)
+console.log(user.settings?.theme); // undefined (No error thrown)
+
+// Nullish Coalescing (??) vs Logical OR (||)
+const userScore = 0; 
+// || sees 0 as falsy and uses the fallback.
+console.log(userScore || 10); // 10 (Incorrect if score is actually 0!)
+// ?? sees 0 as a valid value and keeps it.
+console.log(userScore ?? 10); // 0 (Correct!)
+// Example: Profile with missing info
+const bio = user.bio ?? "This user hasn't written a bio yet.";
+console.log(bio);
+
 9. Functions: Reusable Behavior
-Declaring and calling functions.
-Parameters versus arguments.
-Default parameter values.
-Returning values with return.
-The difference between return and console.log().
-What a function returns without an explicit return.
+
+// Declaring a function
+function sayHello(greeting, name = "Guest") {
+  // return vs console.log:
+  // console.log just prints to the screen. return gives a value back to the code.
+  return `${greeting}, ${name}!`; 
+}
+
+// Calling a function
+const message = sayHello("Hi", "Alice"); 
+console.log(message); // "Hi, Alice!"
+
+// Using the default parameter
+console.log(sayHello("Hello")); // "Hello, Guest!"
+
+// A function without an explicit return statement implicitly returns 'undefined'
+function doNothing() {
+  const x = 5 + 5;
+}
+console.log(doNothing()); // undefined
+
 10. Arrow Functions and Callbacks
-Function expressions and arrow function syntax.
-Implicit returns versus explicit return.
-Comparing x => x * 2 with x => { return x * 2; }.
-Callbacks: passing a function to another function.
-Example: using a callback with .forEach().
+
+// Standard Function Expression
+const addClassic = function(a, b) {
+  return a + b;
+};
+
+// Arrow Function Syntax
+// Explicit return (uses curly braces and the 'return' keyword)
+const multiply = (x) => {
+  return x * 2;
+};
+
+// Implicit return (no curly braces, automatically returns the expression)
+const double = x => x * 2; 
+
+// Callbacks: Passing a function as an argument to another function.
+const users = ["Alice", "Bob", "Charlie"];
+
+// .forEach expects a callback function. It runs this function for every item.
+users.forEach(user => {
+  console.log(`Processing user: ${user}`);
+});
+
 11. Array Methods: map, filter, and find
-Transforming items with .map().
-Selecting matching items with .filter().
-Getting the first matching item with .find().
-What each method returns, including when nothing matches.
-Example: transforming and searching a list of products.
+
+const products = [
+  { id: 1, name: "Laptop", price: 1000 },
+  { id: 2, name: "Mouse", price: 25 },
+  { id: 3, name: "Keyboard", price: 75 }
+];
+
+// .map(): Returns a NEW array by transforming every item.
+const productNames = products.map(product => product.name);
+console.log(productNames); // ["Laptop", "Mouse", "Keyboard"]
+
+// .filter(): Returns a NEW array containing only items that match the condition.
+const cheapProducts = products.filter(product => product.price < 50);
+console.log(cheapProducts);
+
+// .find(): Returns the FIRST matching item itself.
+const mouse = products.find(product => product.name === "Mouse");
+console.log(mouse); // { id: 2, name: "Mouse", price: 25 }
+
 12. Destructuring and Spread Syntax
-Extracting values with object and array destructuring.
-Copying arrays and objects with ....
-Creating a new array with an additional item.
-Creating a new object with an updated property.
-Why a const object can still be modified.
-Why spread creates a shallow copy.
+
+// Array Destructuring: Extract values by position
+const rgb = [255, 128, 0];
+const [red, green, blue] = rgb;
+console.log(green); // 128
+
+// Object Destructuring: Extract values by property name
+const config = { host: "localhost", port: 8080 };
+const { host, port } = config;
+console.log(host); // "localhost"
+
+// Spread Syntax (...) for Arrays
+const oldArray = [1, 2];
+const newArray = [...oldArray, 3]; // Copies oldArray, adds 3
+console.log(newArray); // [1, 2, 3]
+
+// Spread Syntax (...) for Objects
+const originalUser = { name: "Alice", age: 25 };
+// Copies originalUser, updates age
+const updatedUser = { ...originalUser, age: 26 }; 
+
+// Why can we modify a const object?
+// 'const' prevents reassignment of the variable itself, but the properties 
+// inside the object/array are still mutable.
+const myData = { count: 1 };
+myData.count = 2; // Allowed
+// myData = { count: 3 }; // Error!
+
 13. Modules: import and export
-Splitting code into multiple files.
-Named exports and imports.
-Default exports and imports.
-Matching import syntax to the export.
-Example: exporting a helper function and importing it in another file.
+
+// Named Export: You can have multiple per file.
+export const PI = 3.14159;
+
+export function add(a, b) {
+  return a + b;
+}
+
+// Default Export: Only one per file. 
+export default function multiply(a, b) {
+  return a * b;
+}
+
 14. Asynchronous JavaScript: Promises and async/await
-Why some operations finish later.
-What a promise represents.
-Promise states: pending, fulfilled, and rejected.
-Using async and await.
-Why an async function always returns a promise.
-Example: awaiting a provided promise and using its result.
+
+// Why finish later? Network requests, timers, or file reading take time.
+// JavaScript shouldn't "freeze" while waiting.
+
+// A Promise represents the eventual completion (or failure) of an async operation.
+// States: 
+// 1. Pending (working)
+// 2. Fulfilled (success)
+// 3. Rejected (failed)
+
+// A function returning a mock promise
+function getWeather() {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve("Sunny, 72°F"), 1000);
+  });
+}
+
+// async/await makes async code look synchronous and readable.
+async function displayWeather() {
+  console.log("Fetching weather...");
+  
+  // 'await' pauses the execution of this specific function until the promise fulfills
+  const weather = await getWeather(); 
+  
+  console.log(`Today's weather: ${weather}`);
+}
+
+displayWeather();
+
 15. Fetching Data, JSON, and Error Handling
-Requesting data with fetch().
-Checking response.ok.
-Reading JSON with await response.json().
-The difference between JSON and a JavaScript object.
-Handling errors with try and catch.
-Why an HTTP error such as 404 requires an explicit check.
+
+async function fetchUserData(userId) {
+  try {
+    // 1. Request data with fetch()
+    const response = await fetch(`https://jsonplaceholder.typicode.com/users/${userId}`);
+    
+    // HTTP errors (like 404 Not Found) do NOT throw a standard try/catch error in fetch().
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // 2. Parse the JSON
+    // JSON is just a text string format. await response.json() converts that text 
+    // string into an actual usable JavaScript object/array.
+    const user = await response.json();
+    
+    console.log("User data retrieved:", user.name);
+    return user;
+
+  } catch (error) {
+    // 3. Handle errors gracefully (network failures, or our thrown HTTP error)
+    console.error("Failed to fetch user:", error.message);
+  }
+}
+fetchUserData(1);   
+fetchUserData(999); 
+
