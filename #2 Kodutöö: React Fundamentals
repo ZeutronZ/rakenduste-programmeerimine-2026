@@ -1,0 +1,554 @@
+1. React, Vite, and Creating Your First Application
+
+# Terminal setup commands
+npm create vite@latest task-tracker -- --template react
+cd task-tracker
+npm install
+npm run dev
+
+// src/App.jsx
+export default function App() {
+  return (
+    <div>
+      <h1>Task Tracker</h1>
+    </div>
+  );
+}
+
+
+2. Git Workflow, Commit Conventions, and Prettier
+
+// .prettierrc
+{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2
+}
+
+# .prettierignore
+node_modules
+dist
+
+# Format check & git commit workflow
+npx prettier --check .
+git add .
+git commit -m "style: format task tracker components"
+
+
+3. JSX, Components, and Basic Styling
+
+/* src/TaskCard.css */
+.task-card {
+  border: 1px solid #ccc;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+// src/Header.jsx
+export function Header() {
+  return <h1>Task Tracker</h1>;
+}
+
+// src/TaskCard.jsx
+import './TaskCard.css';
+
+export function TaskCard() {
+  return (
+    <div className="task-card">
+      <h3>Learn JSX</h3>
+      <p>Status: Completed</p>
+    </div>
+  );
+}
+
+// src/App.jsx
+import { Header } from './Header';
+import { TaskCard } from './TaskCard';
+
+export default function App() {
+  return (
+    <>
+      <Header />
+      <TaskCard />
+    </>
+  );
+}
+
+
+4. Props and Reusable Components
+
+// src/TaskCard.jsx
+export function TaskCard({ task }) {
+  return (
+    <div className="task-card">
+      <h3>{task.title}</h3>
+      <p>Status: {task.completed ? 'Completed' : 'Incomplete'}</p>
+    </div>
+  );
+}
+
+// src/App.jsx
+import { TaskCard } from './TaskCard';
+
+const task1 = { id: 1, title: "Learn JSX", completed: true };
+const task2 = { id: 2, title: "Practise React state", completed: false };
+
+export default function App() {
+  return (
+    <div>
+      <TaskCard task={task1} />
+      <TaskCard task={task2} />
+    </div>
+  );
+}
+
+
+5. Events, useState, and Conditional Rendering
+
+// src/TaskCard.jsx
+import { useState } from 'react';
+
+export function TaskCard({ title, initialCompleted }) {
+  const [completed, setCompleted] = useState(initialCompleted);
+
+  const handleToggle = () => {
+    setCompleted((prevStatus) => !prevStatus);
+  };
+
+  return (
+    <div className="task-card">
+      <h3>{title}</h3>
+      <p>Status: {completed ? 'Completed' : 'Not completed'}</p>
+      <button onClick={handleToggle}>
+        Mark as {completed ? 'Incomplete' : 'Completed'}
+      </button>
+    </div>
+  );
+}
+
+
+6. Lists, Keys, and Filtering
+
+// src/TaskList.jsx
+import { useState } from 'react';
+
+const initialTasks = [
+  { id: 1, title: 'Learn JSX', completed: true },
+  { id: 2, title: 'Practise React state', completed: false },
+  { id: 3, title: 'Build a Node.js API', completed: false },
+];
+
+export function TaskList() {
+  const [tasks] = useState(initialTasks);
+  const [filter, setFilter] = useState('all');
+
+  // Derived state calculated during component execution
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === 'completed') return task.completed;
+    if (filter === 'incomplete') return !task.completed;
+    return true;
+  });
+
+  return (
+    <div>
+      <div>
+        <button onClick={() => setFilter('all')}>All</button>
+        <button onClick={() => setFilter('completed')}>Completed</button>
+        <button onClick={() => setFilter('incomplete')}>Incomplete</button>
+      </div>
+
+      {filteredTasks.length === 0 ? (
+        <p>No tasks found</p>
+      ) : (
+        <ul>
+          {filteredTasks.map((task) => (
+            <li key={task.id}>
+              {task.title} - {task.completed ? 'Completed' : 'Incomplete'}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+
+7. Controlled Forms and Validation
+
+// src/TaskForm.jsx
+import { useState } from 'react';
+
+export function TaskForm({ onAddTask }) {
+  const [title, setTitle] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmedTitle = title.trim();
+
+    if (!trimmedTitle) {
+      setError('Task title cannot be empty.');
+      return;
+    }
+
+    onAddTask(trimmedTitle);
+    setTitle('');
+    setError('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label htmlFor="task-title">Task Title:</label>
+      <input
+        id="task-title"
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <button type="submit">Add Task</button>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+    </form>
+  );
+}
+
+
+8. Shared State and Adding, Updating, and Deleting Tasks
+
+// src/App.jsx
+import { useState } from 'react';
+import { TaskForm } from './TaskForm';
+
+const initialTasks = [
+  { id: 1, title: 'Learn JSX', completed: true },
+  { id: 2, title: 'Practise React state', completed: false },
+  { id: 3, title: 'Build a Node.js API', completed: false },
+];
+
+export default function App() {
+  const [tasks, setTasks] = useState(initialTasks);
+
+  const handleAddTask = (title) => {
+    const newTask = {
+      id: Date.now(),
+      title,
+      completed: false,
+    };
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+  };
+
+  const handleToggleTask = (id) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  const handleDeleteTask = (id) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  };
+
+  return (
+    <div>
+      <TaskForm onAddTask={handleAddTask} />
+      <ul>
+        {tasks.map((task) => (
+          <li key={task.id}>
+            <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
+              {task.title}
+            </span>
+            <button onClick={() => handleToggleTask(task.id)}>Toggle</button>
+            <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+
+9. React Router and Task Details
+
+npm install react-router-dom
+
+// src/App.jsx
+import { HashRouter, Routes, Route, Link, useParams } from 'react-router-dom';
+
+const tasks = [
+  { id: 1, title: "Learn JSX", completed: true },
+  { id: 2, title: "Practise React state", completed: false },
+  { id: 3, title: "Build a Node.js API", completed: false },
+];
+
+function TaskDetail() {
+  const { taskId } = useParams();
+  const task = tasks.find((t) => t.id === Number(taskId));
+
+  if (!task) return <h2>Task not found.</h2>;
+
+  return (
+    <div>
+      <h2>Task Details</h2>
+      <p><strong>Title:</strong> {task.title}</p>
+      <p><strong>Status:</strong> {task.completed ? 'Completed' : 'Incomplete'}</p>
+      <Link to="/tasks">Back to List</Link>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <nav>
+        <Link to="/">Home</Link> | <Link to="/tasks">Tasks</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<h2>Home Page</h2>} />
+        <Route
+          path="/tasks"
+          element={
+            <ul>
+              {tasks.map((task) => (
+                <li key={task.id}>
+                  <Link to={`/tasks/${task.id}`}>{task.title}</Link>
+                </li>
+              ))}
+            </ul>
+          }
+        />
+        <Route path="/tasks/:taskId" element={<TaskDetail />} />
+        <Route path="*" element={<h2>404 Page Not Found</h2>} />
+      </Routes>
+    </HashRouter>
+  );
+}
+
+
+10. useEffect, Loading Data, and an API Service
+
+// public/tasks.json
+[
+  { "id": 1, "title": "Learn JSX", "completed": true },
+  { "id": 2, "title": "Practise React state", "completed": false },
+  { "id": 3, "title": "Build a Node.js API", "completed": false }
+]
+
+// src/services/taskApi.js
+export async function getTasks() {
+  const response = await fetch(`${import.meta.env.BASE_URL}tasks.json`);
+  if (!response.ok) {
+    throw new Error('Failed to load task dataset.');
+  }
+  return response.json();
+}
+
+// src/App.jsx
+import { useEffect, useState } from 'react';
+import { getTasks } from './services/taskApi';
+
+export default function App() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getTasks()
+      .then((data) => {
+        if (isMounted) {
+          setTasks(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false; // Cleanup flag
+    };
+  }, []);
+
+  if (loading) return <p>Loading tasks...</p>;
+  if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
+
+  return (
+    <ul>
+      {tasks.map((task) => (
+        <li key={task.id}>{task.title}</li>
+      ))}
+    </ul>
+  );
+}
+
+
+11. Production Builds and GitHub Pages Deployment
+
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/task-tracker/', // Base subpath matching repository name
+});
+
+# .github/workflows/deploy.yml
+name: Deploy static assets to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+
+
+12. Reusable Layouts and the children Prop
+
+// src/PageSection.jsx
+export function PageSection({ title, children }) {
+  return (
+    <section style={{ border: '1px solid #ddd', padding: '16px', margin: '12px 0' }}>
+      <h2>{title}</h2>
+      <div>{children}</div>
+    </section>
+  );
+}
+
+// src/App.jsx
+import { PageSection } from './PageSection';
+
+const tasks = [
+  { id: 1, title: 'Learn JSX', completed: true },
+  { id: 2, title: 'Practise React state', completed: false },
+  { id: 3, title: 'Build a Node.js API', completed: false },
+];
+
+export default function App() {
+  return (
+    <PageSection title="My Tasks">
+      <ul>
+        {tasks.map((task) => (
+          <li key={task.id}>{task.title}</li>
+        ))}
+      </ul>
+    </PageSection>
+  );
+}
+
+
+13. React Debugging and Component Tests
+
+Browser Console Errors and React Warnings:
+Console Errors: Standard JavaScript runtime exceptions (e.g., TypeError: Cannot read properties of undefined) that crash or halt script execution.
+React Warnings: Development-only notices logged by React in the browser console. They highlight potential bugs and performance anti-patterns before they cause runtime failures (e.g., missing key props in rendered lists, switching inputs from uncontrolled to controlled, or invalid DOM attributes like using class instead of className).
+React Developer Tools:
+A browser extension (available for Chrome and Firefox) that adds two main panels to Developer Tools: Components and Profiler.
+The Components tree allows you to inspect the current hierarchy of React components, view and live-edit their props, state, and hooks, and locate source files directly.
+The Profiler records re-render durations to identify unnecessary renders and performance bottlenecks.
+What a Component Test Checks:
+Component tests verify that a unit of UI renders expected content given specific props/state and responds correctly to simulated user interactions (such as button clicks, typing into form inputs, or submitting forms).
+Testing Behaviour vs. Implementation Details:
+Implementation Details: Internal state variable names, CSS class names, component structural tags (<div> vs <section>), or internal handler function names.
+User Behaviour: Visible text content, accessible roles (button, heading), user inputs, and output callbacks triggered by user actions.
+Why it matters: Tests that rely on implementation details break whenever you refactor internal code without actually changing how the application works for the end user. Testing output and accessibility (the behaviour) ensures tests remain resilient and reliably guarantee app functionality.
+
+Test Setup Configuration:
+// vitest.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+  },
+});
+
+// src/setupTests.js
+import '@testing-library/jest-dom';
+
+Component Code:
+// src/TaskCard.jsx
+export function TaskCard({ task, onToggle }) {
+  return (
+    <div className="task-card">
+      <h3>{task.title}</h3>
+      <p>Status: {task.completed ? 'Completed' : 'Not completed'}</p>
+      <button onClick={() => onToggle(task.id)}>
+        Toggle Status
+      </button>
+    </div>
+  );
+}
+
+Test Suite:
+// src/TaskCard.test.jsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { TaskCard } from './TaskCard';
+
+describe('TaskCard Component', () => {
+  const sampleTask = {
+    id: 1,
+    title: 'Learn JSX',
+    completed: true,
+  };
+
+  it('renders the task title correctly', () => {
+    render(<TaskCard task={sampleTask} onToggle={() => {}} />);
+    
+    // Asserts that the title text exists in the document
+    expect(screen.getByText('Learn JSX')).toBeInTheDocument();
+  });
+
+  it('calls onToggle with task ID when toggle button is clicked', async () => {
+    const handleToggleMock = vi.fn();
+    const user = userEvent.setup();
+
+    render(<TaskCard task={sampleTask} onToggle={handleToggleMock} />);
+
+    // Query button by its accessible role and text
+    const button = screen.getByRole('button', { name: /toggle status/i });
+    
+    // Simulate user click
+    await user.click(button);
+
+    // Verify mock callback invocation and parameters
+    expect(handleToggleMock).toHaveBeenCalledTimes(1);
+    expect(handleToggleMock).toHaveBeenCalledWith(1);
+  });
+});
+
+Completion Requirement
+Running npx vitest executes the test suite.
+
+Passing Output
+When TaskCard.jsx functions correctly:
+src/TaskCard.test.jsx (2)
+TaskCard Component (2)
+renders the task title correctly
+calls onToggle with task ID when toggle button is clicked
+Test Files  1 passed (1)
+Tests  2 passed (2)
