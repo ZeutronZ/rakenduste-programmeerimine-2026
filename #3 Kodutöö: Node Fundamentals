@@ -1,0 +1,448 @@
+1. What Node.js Is and Running JavaScript Outside the Browser
+
+Node.js as a runtime: Node.js executes JavaScript code using the V8 engine directly on your operating system, independent of a web browser.
+Browser vs. Server-side JavaScript: Browser JavaScript interacts with the DOM (document, window) to manipulate web pages. Server-side JavaScript interacts with the file system, network, and databases, lacking DOM APIs because there is no visual page to render.
+Running a file != creating a server: Executing node index.js runs the script once from top to bottom and exits. A web server requires explicit code to listen continuously on a network port.
+Checking versions: Run node -v and npm -v in the terminal to verify installations.
+
+// index.js
+const tasks = [
+  { id: 1, title: "Learn JSX", completed: true },
+  { id: 2, title: "Practise React state", completed: false },
+  { id: 3, title: "Build a Node.js API", completed: false },
+];
+
+console.log("Hello from Node.js!");
+console.log("Initial Tasks:", tasks);
+Run with: node index.js
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+2. npm, package.json and Project Scripts
+
+npm init -y: Automatically creates a package.json file with default values, acting as the configuration blueprint for your project.
+Dependencies vs. Development dependencies: dependencies are required to run the application (e.g., Express). devDependencies are only needed during development (e.g., testing frameworks, Prettier).
+Manifests and Modules: package.json tracks project metadata. node_modules stores the downloaded package code. package-lock.json guarantees exact version matches across different machines.
+npm install vs npm ci: install resolves and potentially updates dependencies. ci (Clean Install) strictly installs exact versions from package-lock.json, deleting the existing node_modules folder first.
+npm scripts: Shortcuts defined in package.json to execute longer terminal commands (e.g., npm start).
+Ignoring node_modules: Add node_modules/ to .gitignore so you don't commit massive, easily reproducible third-party code to Git.
+
+// package.json (excerpt)
+{
+  "name": "task-api",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
+Run with: npm start
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+3. Modules and Reusable Task Functions
+
+"type": "module": Adding this to package.json enables ECMAScript Modules (ESM), allowing the use of import and export instead of Node's legacy require().
+Exports and Imports: Use export function... to expose logic and import { func } from './file.js' to use it elsewhere. ESM requires the .js extension in relative import paths.
+Separation of concerns: Separating data arrays, processing logic, and server startup makes code testable and easier to maintain.
+Returning values: Functions should return processed data rather than calling console.log, allowing the caller (like an API route) to decide how to format or send the result.
+
+// src/taskManager.js
+export function getAllTasks(tasks) {
+  return tasks;
+}
+
+export function getTaskById(tasks, id) {
+  return tasks.find(task => task.id === id);
+}
+
+export function getCompletedTasks(tasks) {
+  return tasks.filter(task => task.completed === true);
+}
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+4. HTTP, APIs and JSON
+
+Client and Server: The client (browser/React) requests data or actions; the server (Node/Express) processes the request and returns a response.
+Requests and Responses: The core communication cycle. Requests contain instructions; responses contain status and data.
+
+Anatomy of a Request:
+URL/Path: Where to send it (e.g., /api/tasks).
+Query String: Extra parameters (e.g., ?completed=true).
+Headers: Metadata (e.g., Content-Type: application/json).
+Body: The actual payload sent (used in POST/PATCH).
+
+HTTP Methods: GET (read), POST (create), PATCH (update partial), DELETE (remove).
+Status Codes: 200 (OK), 201 (Created), 204 (No Content), 400 (Bad Request), 404 (Not Found), 500 (Internal Server Error).
+Objects vs. JSON: JavaScript objects are live memory structures. JSON is a strict string representation of that data used for transmission over HTTP.
+
+Planned Request Analysis:
+
+Method: GET
+URL Path: /api/tasks/2
+Expected Behavior: Fetch the specific task with an ID of 2.
+Response Status: 200 OK
+Response Body: The JSON text representing task 2, properly formatted with double quotes around keys.
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+5. Express and Your First API Route
+
+Express: A minimal web framework for Node.js that simplifies routing, handling requests, and sending responses compared to raw Node.js HTTP modules.
+Setup: Installed via npm install express.
+req, res, res.json(): req holds incoming request data. res contains methods to send data back. res.json() safely converts a JavaScript object to a JSON string and sets the correct headers.
+app.listen() & Ports: Binds the server to a specific port (like 3000) on localhost (your local machine), keeping the process alive to listen for incoming network traffic.
+Separating app and server: Exporting the Express app without listening allows automated testing tools to make requests without binding to a live network port.
+
+// src/app.js
+import express from 'express';
+
+const app = express();
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+export default app;
+
+// src/server.js
+import app from './app.js';
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+6. GET Routes, Route Parameters and Query Parameters
+
+req.params vs. req.query: req.params grabs dynamic parts of the URL path (e.g., /tasks/:id). req.query grabs optional variables after the ? (e.g., ?completed=true).
+String Conversion: URL parameters always arrive as strings. An ID must be converted using Number(req.params.id) to match numeric IDs in the array.
+"false" is truthy: In JavaScript, any non-empty string evaluates to true. "false" must be explicitly checked (e.g., req.query.completed === 'false').
+Valid but missing IDs: If an ID is a valid number but does not exist in the array, the server must return a 404 Not Found.
+
+// src/app.js (continued)
+import { getAllTasks, getTaskById } from './taskManager.js';
+
+let tasks = [
+  { id: 1, title: "Learn JSX", completed: true },
+  { id: 2, title: "Practise React state", completed: false },
+  { id: 3, title: "Build a Node.js API", completed: false },
+];
+
+app.get('/api/tasks', (req, res) => {
+  const { completed } = req.query;
+  
+  if (completed !== undefined) {
+    if (completed !== 'true' && completed !== 'false') {
+      return res.status(400).json({ error: "completed query must be 'true' or 'false'" });
+    }
+    const isCompleted = completed === 'true';
+    return res.json(tasks.filter(t => t.completed === isCompleted));
+  }
+  
+  res.json(tasks);
+});
+
+app.get('/api/tasks/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const task = getTaskById(tasks, id);
+  
+  if (!task) return res.status(404).json({ error: "Task not found" });
+  res.json(task);
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+7. POST Routes, Request Bodies and Validation
+
+express.json(): Built-in middleware that parses incoming requests with JSON payloads and populates req.body.
+Content-Type: application/json: Required header from the client so Express knows to parse the body as JSON.
+Server-Side Validation: Never trust client data. Even if React validates a form, a user can bypass the frontend using tools like Postman or cURL. The backend is the final line of defense.
+ID Generation: The server is responsible for assigning unique IDs (e.g., using Date.now() or incrementing the highest existing ID).
+
+// src/app.js (continued)
+app.use(express.json()); // Global middleware for parsing JSON
+
+app.post('/api/tasks', (req, res) => {
+  const { title } = req.body;
+
+  if (typeof title !== 'string' || title.trim() === '') {
+    return res.status(400).json({ error: "Valid title is required" });
+  }
+
+  const newTask = {
+    id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+    title: title.trim(),
+    completed: false
+  };
+
+  tasks.push(newTask);
+  res.status(201).json(newTask);
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+8. PATCH and DELETE Routes
+
+PATCH: Applies partial modifications to a resource (e.g., updating just the title or completed status without replacing the whole object).
+DELETE: Removes a specific resource.
+204 No Content: Used for successful deletions where the server has fulfilled the request but does not need to return any payload data.
+
+// src/app.js (continued)
+app.patch('/api/tasks/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const task = getTaskById(tasks, id);
+  
+  if (!task) return res.status(404).json({ error: "Task not found" });
+
+  const { title, completed } = req.body;
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim() === '') {
+      return res.status(400).json({ error: "Valid title is required" });
+    }
+    task.title = title.trim();
+  }
+
+  if (completed !== undefined) {
+    if (typeof completed !== 'boolean') {
+      return res.status(400).json({ error: "Completed must be a boolean" });
+    }
+    task.completed = completed;
+  }
+
+  res.status(200).json(task);
+});
+
+app.delete('/api/tasks/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const initialLength = tasks.length;
+  
+  tasks = tasks.filter(t => t.id !== id);
+  
+  if (tasks.length === initialLength) {
+    return res.status(404).json({ error: "Task not found" });
+  }
+  
+  res.status(204).end();
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+9. Middleware and Consistent Error Handling
+
+Middleware & Order: Functions that have access to req and res in the request-response cycle. They run sequentially top-to-bottom.
+next(): Passes control to the next middleware or route handler. Without it, the request hangs.
+Unknown Route Fallback: A middleware placed after all defined routes catches anything that didn't match and returns a 404.
+Global Error Handler: An Express middleware with exactly four arguments (err, req, res, next). It catches unhandled exceptions to prevent the server from crashing and standardizes error responses without leaking stack traces to the client.
+
+// src/app.js (continued - placed at the very bottom before export)
+
+// 1. Request Logging Middleware (placed at the top)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
+// ... (all previous routes here) ...
+
+// 2. 404 Fallback for unknown routes
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+// 3. Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("Unexpected Error:", err.message);
+  res.status(500).json({ error: "An unexpected server error occurred" });
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+10. Connecting React to Node.js
+
+Separate Processes: The frontend (port 5173) and backend (port 3000) run independently.
+CORS (Cross-Origin Resource Sharing): Browsers block requests between different ports/domains for security. The backend must explicitly allow the frontend's origin using the cors package.
+Vite Environment Variables: Variables starting with VITE_ are injected at build time. Deployed frontends cannot use localhost because localhost resolves to the user's personal device, not the backend server.
+Rebuilding: Because Vite hardcodes environment variables during the build process, altering VITE_API_URL requires running npm run build again.
+
+// Backend: src/app.js
+import cors from 'cors';
+// Allow React dev server
+app.use(cors({ origin: 'http://localhost:5173' })); 
+
+
+// Frontend: src/services/taskApi.js
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+export async function fetchTasks() {
+  const response = await fetch(`${API_URL}/tasks`);
+  if (!response.ok) throw new Error('Failed to load tasks');
+  return response.json();
+}
+
+export async function createTask(title) {
+  const response = await fetch(`${API_URL}/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  if (!response.ok) throw new Error('Failed to create task');
+  return response.json();
+}
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+11. Automated API Tests and Repeatable Test Data
+
+Integration Testing: Verifies that routing, middleware, logic, and response formatting all work together correctly.
+Vitest & Supertest: Vitest runs the test suite; Supertest simulates HTTP requests against the Express app without requiring a running port.
+Predictable Data: Tests must execute in isolation. If Test A deletes a task and Test B expects it to exist, Test B fails randomly. The shared dataset must be completely reset before each test.
+
+// test/api.test.js
+import { describe, it, expect, beforeEach } from 'vitest';
+import request from 'supertest';
+import app from '../src/app.js';
+import { resetTasksForTesting } from '../src/taskManager.js'; // Requires exporting a reset helper
+
+describe('Tasks API', () => {
+  beforeEach(() => {
+    resetTasksForTesting(); // Reset to the 3 initial tasks before every test
+  });
+
+  it('GET /api/tasks returns all tasks', async () => {
+    const res = await request(app).get('/api/tasks');
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(3);
+  });
+
+  it('POST /api/tasks creates a task', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .send({ title: 'Learn Testing' });
+    expect(res.status).toBe(201);
+    expect(res.body.title).toBe('Learn Testing');
+  });
+
+  it('DELETE /api/tasks/1 removes a task', async () => {
+    await request(app).delete('/api/tasks/1').expect(204);
+    await request(app).get('/api/tasks/1').expect(404);
+  });
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+12. Saving Tasks to a JSON File
+
+Volatility of Memory: Variables (let tasks = []) exist in RAM. When the Node process stops or restarts, RAM is wiped.
+node:fs/promises: Provides asynchronous methods (readFile, writeFile) to interact with the file system without blocking the main thread.
+JSON.parse() / JSON.stringify(): Used to convert the text string from the file back into a JavaScript array, and vice versa.
+Concurrent Writes: High traffic can trigger multiple file writes simultaneously, potentially corrupting the JSON file. A true database handles concurrency locks automatically.
+
+// src/storage.js
+import fs from 'node:fs/promises';
+
+export async function saveTasks(filePath, tasks) {
+  const data = JSON.stringify(tasks, null, 2);
+  await fs.writeFile(filePath, data, 'utf8');
+}
+
+export async function loadTasks(filePath) {
+  try {
+    const data = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    // Basic catch: handled properly in Step 14
+    return [];
+  }
+}
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+13. Environment Variables and Backend Configuration
+
+Environment Variables: External configuration injected into the program by the OS, accessible via process.env.
+All values are strings: Even PORT=3000 is parsed as the string "3000".
+Separating config: Logic shouldn't be hardcoded. Port numbers and file paths change between development, testing, and production servers.
+.env.example: Provides a template showing developers what variables the app requires, committed to Git without real passwords or keys.
+
+# .env.example
+PORT=3000
+TASKS_FILE=./data/tasks.json
+
+// src/server.js
+import 'dotenv/config'; // Automatically loads .env file
+import app from './app.js';
+
+const PORT = process.env.PORT || 3000;
+const TASKS_FILE = process.env.TASKS_FILE || './data/tasks.json';
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Using data file: ${TASKS_FILE}`);
+});
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+14. Handling Missing and Corrupted Data Files
+
+Missing file (ENOENT): If fs.readFile looks for a file that hasn't been created yet, Node throws an ENOENT (Error No Entry). Returning an empty array [] is a safe, graceful recovery.
+Invalid JSON: If the file exists but contains corrupted text, JSON.parse throws a SyntaxError.
+Preserving Data: If corruption occurs, the server MUST crash or log an error instead of returning []. Returning [] would cause the app to overwrite the corrupted (but potentially recoverable) file with a blank array on the next save, resulting in catastrophic data loss.
+
+// src/storage.js (enhanced loadTasks)
+import fs from 'node:fs/promises';
+
+export async function loadTasks(filePath) {
+  try {
+    const data = await fs.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(data);
+    
+    if (!Array.isArray(parsed)) {
+      throw new Error("Corrupted data: JSON is not an array.");
+    }
+    return parsed;
+
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return []; // Safe to return empty array if file doesn't exist yet
+    }
+    // For JSON parsing errors or permissions issues, throw to prevent overwriting
+    throw err; 
+  }
+}
+
+___________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+15. Testing Saving and Loading with a Temporary File
+
+Avoiding Real Data: Tests must never overwrite or delete tasks.json containing real user data.
+Temporary Directories: Sandboxed OS-level folders that isolate test artifacts and can be safely deleted.
+Cleanup (finally): Ensures the fs.rm cleanup command executes even if an expect assertion fails halfway through the test, preventing hard drive bloat.
+
+// test/storage.test.js
+import { describe, it, expect } from 'vitest';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { saveTasks, loadTasks } from '../src/storage.js';
+
+describe('Storage', () => {
+  it('saves and loads tasks using a temporary directory', async () => {
+    let tempDir;
+    
+    try {
+      // 1. Create unique temp directory
+      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'task-test-'));
+      const testFilePath = path.join(tempDir, 'tasks.json');
+      
+      const sampleTasks = [
+        { id: 1, title: "Test task 1", completed: false },
+        { id: 2, title: "Test task 2", completed: true }
+      ];
+
+      // 2. Save tasks
+      await saveTasks(testFilePath, sampleTasks);
+      
+      // 3. Load tasks
+      const loadedTasks = await loadTasks(testFilePath);
+
+      // 4. Assert matches
+      expect(loadedTasks).toEqual(sampleTasks);
+      
+    } finally {
+      // 5. Cleanup even if assertions fail
+      if (tempDir) {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      }
+    }
+  });
+});
